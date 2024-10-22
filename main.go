@@ -2,69 +2,80 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"slices"
 	"strconv"
 	"strings"
 )
 
-func ReadFile(fileName string) string {
-	var text string
-
-	file, err := os.Open(fileName)
+func ReadFile(fileName string) (string, error) {
+	buf, err := os.ReadFile(fileName)
 	if err != nil {
-		fmt.Println("Не смог открыть файл...")
-		return ""
-	}
-	defer file.Close()
-
-	buf := make([]byte, 64)
-
-	for {
-		n, err := file.Read(buf)
-		if err == io.EOF {
-			break
-		}
-		text += string(buf[:n])
-
+		return "", fmt.Errorf("Ошибка при чтении файла: %s", err)
 	}
 
-	return text
+	return string(buf), nil
 }
 
-func main() {
-	myText := ReadFile("input.txt")
-	myText = strings.ReplaceAll(myText, "\r", "")
+func proccessText(text string) []string {
+	textLines := strings.Split(text, "\n")
 
-	myTextLines := strings.Split(myText, "\n")
+	linesLen := len(textLines)
+	if linesLen > 1000 {
+		linesLen /= 10
+	} else {
+		linesLen = 100
+	}
+	myMap := make(map[string]int, linesLen)
 
-	myMap := make(map[string]int, 10)
-
-	for _, line := range myTextLines {
-		myMap[line] += 1
+	for _, line := range textLines {
+		myMap[line]++
 	}
 
-	file, err := os.Create("output.txt")
-	if err != nil {
-		fmt.Println("Не смог создать файл...")
-		os.Exit(1)
+	uniqLen := 0
+	for _, cnt := range myMap {
+		if cnt == 1 {
+			uniqLen++
+		}
 	}
-	defer file.Close()
 
-	uniqTextLines := []string{}
+	uniqTextLines := make([]string, uniqLen)
 	for line, cnt := range myMap {
-		if cnt == 1 && len(line) != 0 {
+		if cnt == 1 {
 			uniqTextLines = append(uniqTextLines, line)
 		}
 	}
-	slices.Sort(uniqTextLines)
-	slices.Reverse(uniqTextLines)
 
-	if len(uniqTextLines) == 0 {
-		file.WriteString("Не нашель уникальных строк...")
+	slices.Sort(uniqTextLines)
+
+	return uniqTextLines
+}
+
+func writeFile(uniqLines []string) error {
+	file, err := os.Create("output.txt")
+	if err != nil {
+		return fmt.Errorf("Ошибка при записи файла: %s", err)
 	}
-	for _, line := range uniqTextLines {
+	defer file.Close()
+
+	for _, line := range uniqLines {
 		file.WriteString(strings.ToUpper(line) + " - " + strconv.Itoa(len(line)) + " байт \n")
+	}
+
+	return nil
+}
+
+func main() {
+	myText, err := ReadFile(os.Args[1])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	uniqLines := proccessText(myText)
+
+	err = writeFile(uniqLines)
+	if err != nil {
+		fmt.Println(err)
 	}
 }
