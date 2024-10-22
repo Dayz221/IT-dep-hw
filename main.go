@@ -14,7 +14,10 @@ func ReadFile(fileName string) (string, error) {
 		return "", fmt.Errorf("Ошибка при чтении файла: %s", err)
 	}
 
-	return string(buf), nil
+	text := string(buf)
+	text = strings.ReplaceAll(text, "\r", "")
+
+	return text, nil
 }
 
 func proccessText(text string) []string {
@@ -59,7 +62,9 @@ func writeFile(uniqLines []string) error {
 	defer file.Close()
 
 	for _, line := range uniqLines {
-		file.WriteString(strings.ToUpper(line) + " - " + strconv.Itoa(len(line)) + " байт \n")
+		if len(line) != 0 {
+			file.WriteString(strings.ToUpper(line) + " - " + strconv.Itoa(len(line)) + " байт \n")
+		}
 	}
 
 	return nil
