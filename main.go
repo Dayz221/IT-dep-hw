@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"strconv"
 	"strings"
 )
 
@@ -14,13 +13,11 @@ func ReadFile(fileName string) (string, error) {
 		return "", fmt.Errorf("Ошибка при чтении файла: %s", err)
 	}
 
-	text := string(buf)
-	text = strings.ReplaceAll(text, "\r", "")
-
-	return text, nil
+	return string(buf), nil
 }
 
 func proccessText(text string) []string {
+	text = strings.ReplaceAll(text, "\r", "")
 	textLines := strings.Split(text, "\n")
 
 	linesLen := len(textLines)
@@ -45,7 +42,9 @@ func proccessText(text string) []string {
 	uniqTextLines := make([]string, uniqLen)
 	for line, cnt := range myMap {
 		if cnt == 1 {
-			uniqTextLines = append(uniqTextLines, line)
+			uniqConvertedLine := fmt.Sprintf("%s - %d байт\n", strings.ToUpper(line), len(line))
+			uniqTextLines = append(uniqTextLines, uniqConvertedLine)
+
 		}
 	}
 
@@ -63,7 +62,7 @@ func writeFile(uniqLines []string) error {
 
 	for _, line := range uniqLines {
 		if len(line) != 0 {
-			file.WriteString(strings.ToUpper(line) + " - " + strconv.Itoa(len(line)) + " байт \n")
+			file.WriteString(line)
 		}
 	}
 
@@ -71,6 +70,11 @@ func writeFile(uniqLines []string) error {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Передайте в команду запуска путь до входного файла...")
+		return
+	}
+
 	myText, err := ReadFile(os.Args[1])
 	if err != nil {
 		fmt.Println(err)
