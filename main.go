@@ -62,7 +62,10 @@ func writeFile(uniqLines []string) error {
 
 	for _, line := range uniqLines {
 		if len(line) != 0 {
-			file.WriteString(line)
+			_, err = file.WriteString(line)
+			if err != nil {
+				return fmt.Errorf("Ошибка при записи файла: %s", err)
+			}
 		}
 	}
 
